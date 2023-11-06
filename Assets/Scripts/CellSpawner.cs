@@ -1,7 +1,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
 using Random = UnityEngine.Random;
 
 public class CellSpawner : MonoBehaviour
@@ -14,14 +17,6 @@ public class CellSpawner : MonoBehaviour
     private float _spacerWidth = 4f;
     private float _padding => _cellSize + _spacerWidth;
 
-    private async void Start()
-    {
-        for (int i = 0; i < 16; i++)
-        {
-            Spawn(i % 4, i / 4);
-        }
-    }
-
     // (0, 0) to (3, 3) 
     public Cell Spawn(int x, int y)
     {
@@ -30,14 +25,31 @@ public class CellSpawner : MonoBehaviour
         var p_x = _upperLeftCellPosition.x + _padding * x;
         var p_y = _upperLeftCellPosition.y - _padding * y;
 
-        var cell = Instantiate(_cellPrefab);
-        var rect = cell.transform as RectTransform;
-        rect.SetParent(transform);
-        rect.anchoredPosition = new Vector3(p_x, p_y);
-        Debug.LogError(rect.position);
+        var cell = Instantiate(_cellPrefab, _root.transform);
+        cell.SetPosition(new Vector2(p_x, p_y));
+        cell.Animate();
 
         return cell;
     }
-}
 
-// テストコード書くか...
+    public void SetPosition(Cell cell, int x, int y)
+    {
+        var p_x = _upperLeftCellPosition.x + _padding * x;
+        var p_y = _upperLeftCellPosition.y - _padding * y;
+
+        cell.Move(new Vector2(p_x, p_y));
+    }
+
+    public void MoveAndKill(Cell cell, int x, int y, UnityAction callback = null)
+    {
+        var p_x = _upperLeftCellPosition.x + _padding * x;
+        var p_y = _upperLeftCellPosition.y - _padding * y;
+
+        cell.Move(new Vector2(p_x, p_y), () =>
+        {
+            Destroy(cell.gameObject);
+            callback?.Invoke();
+        });
+        
+    }
+}
